@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"os"
+
+	"github.com/SiweiWang/go-in-action/rrs_feed/search"
 )
 
 //init is called prior to main
