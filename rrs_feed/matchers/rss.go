@@ -26,7 +26,7 @@ type(
 
 	// image defines the fields associated with the image tag
 	// in the rss document.
-	item struct {
+	image struct {
 		XMLName xml.Name `xml:"image"`
 		URL     string   `xml:"url"`
 		Title   string   `xml:"title"`
@@ -51,7 +51,7 @@ type(
 	}
 
 	// rssDocument defines the fields associated with the rss docuemnt.
-	rssDocument struc {
+	rssDocument struct {
 		XMLName xml.Name `xml:"rss"`
 		Channel channel  `xml:"channel"`
 	}
@@ -71,7 +71,7 @@ func (m rssMatcher) Search(feed *search.Feed, searchTerm string) ([]*search.Resu
 
 	log.Printf("Search Feed Type[%s] Site[%s] for URI[%s]\n", feed.Type, feed.Name, feed.URI)
 
-	docuemnt, err := m.Retrieve(feed)
+	docuemnt, err := m.retrieve(feed)
 	if err != nil {
 		return nil, err
 	}
@@ -99,12 +99,40 @@ func (m rssMatcher) Search(feed *search.Feed, searchTerm string) ([]*search.Resu
 
 		// if we found a match save the result.
 		if matched {
-			results = append(result, &search.Result{
+			results = append(results, &search.Result{
 				Field: "Description",
-				Content: channelItem,Description,
+				Content: channelItem.Description,
 			})
 		}
 	}
 
 	return results, nil
+}
+
+// retrieve performs a HTTP Get request for the rss feed and decodes the results.
+func (m rssMatcher) retrieve(feed *search.Feed) (*rssDocument, error) {
+	if feed.URI == "" {
+		return nil, errors.New("No rss feed uri provided")
+	}
+
+	// Retrieve the rss feed document from the web.
+	resp, err := http.Get(feed.URI)
+	if err != nil {
+		return nil, err
+	}
+
+	// Close the response once we return from the function.
+	defer resp.Body.Close()
+
+	// Check the status code for a 200 so we know we have received a
+	// proper response.
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("HTTP Response Error %d for %s\n", resp.StatusCode, feed.URI)
+	}
+
+	// Decode the rss feed document into our struct type.
+	// We don't need to check for errors, the caller can do this.
+	var document rssDocument
+	err = xml.NewDecoder(resp.Body).Decode(&document)
+	return &document, err
 }

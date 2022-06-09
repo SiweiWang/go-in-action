@@ -29,7 +29,7 @@ func RetrieveFeeds() ([]*Feed, error) {
 	// Decode the file into a slice of pointers to Feed values
 	var feeds []*Feed
 	err = json.NewDecoder(file).Decode(&feeds)
-
-	// We don't need to check for errors, the caller can do this.
+	
+	// We don't nee	 to check for errors, the caller can do this.
 	return feeds, err
 }

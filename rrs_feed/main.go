@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	_ "github.com/SiweiWang/go-in-action/rrs_feed/matchers"
 	"github.com/SiweiWang/go-in-action/rrs_feed/search"
 )
 
