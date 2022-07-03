@@ -12,5 +12,3 @@ func init() {
 func (m defaultMatcher) Search(feed *Feed, searchTerm string) ([]*Result, error) {
 	return nil, nil
 }
-
-
