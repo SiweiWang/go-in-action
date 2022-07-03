@@ -4,6 +4,7 @@ package runner
 import (
 	"errors"
 	"os"
+	"os/signal"
 	"time"
 )
 
@@ -32,3 +33,63 @@ var ErrTimeout = errors.New("received timeout")
 var ErrInterrupt = errors.New("received interrupt")
 
 // New returns a new ready to use Runner
+func New(d time.Duration) *Runner {
+	return &Runner{
+		interrupt: make(chan os.Signal, 1),
+		complete:  make(chan error),
+		timeout:   time.After(d),
+	}
+}
+
+//Add attaches tasks to Runner. A task is a function that takes an init ID
+func (r *Runner) Add(tasks ...func(int)) {
+	r.tasks = append(r.tasks, tasks...)
+}
+
+// Start runs all tasks and monitors channel events.
+func (r *Runner) Start() error {
+	signal.Notify(r.interrupt, os.Interrupt)
+
+	go func() {
+		r.complete <- r.run()
+	}()
+
+	select {
+	// signaled when processing is done
+	case err := <-r.complete:
+		return err
+
+	// singaled when we run out of time
+	case <-r.timeout:
+		return ErrTimeout
+	}
+}
+
+// run executes each registered task.
+func (r *Runner) run() error {
+	for id, task := range r.tasks {
+		// Check for an interrupt singal from the OS.
+		if r.gotInterrupt() {
+			return ErrInterrupt
+		}
+
+		//execute the registered task
+		task(id)
+	}
+	return nil
+}
+
+// gotInterrupted verfies if the interrupt signal has been issued
+func (r *Runner) gotInterrupt() bool {
+	select {
+	//signaled when a interrupt event is sent
+	case <-r.interrupt:
+		// Stop receiving any further singals.
+		signal.Stop(r.interrupt)
+		return true
+
+	// Continue running as normal
+	default:
+		return false
+	}
+}
