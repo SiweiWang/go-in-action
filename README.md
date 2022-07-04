@@ -5,12 +5,7 @@
 Setup go dependencies
 
 ```sh
-go mod init github.com/SiweiWang/go-in-action
-go tidy
-```
-
-### Run rrs_feed
-```sh
-cd rrs_feed
-go run main.go
+cd <Project>
+go mod init github.com/SiweiWang/go-in-action/<Project>
+go mod tidy
 ```
